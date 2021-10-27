@@ -44,6 +44,8 @@ class Individual_Grid(object):
         # print(measurements.keys())
         # Default fitness function: Just some arbitrary combination of a few criteria.  Is it good?  Who knows?
         # STUDENT Modify this, and possibly add more metrics.  You can replace this with whatever code you like.
+
+        # difficulty curve
         coefficients = dict(
             meaningfulJumpVariance=0.5,
             negativeSpace=0.6,
@@ -58,6 +60,7 @@ class Individual_Grid(object):
 
     # Return the cached fitness value or calculate it as needed.
     def fitness(self):
+        # this is the heuristic
         if self._fitness is None:
             self.calculate_fitness()
         return self._fitness
@@ -82,11 +85,29 @@ class Individual_Grid(object):
         # do crossover with other
         left = 1
         right = width - 1
-        for y in range(height):
-            for x in range(left, right):
-                # STUDENT Which one should you take?  Self, or other?  Why?
-                # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
-                pass
+
+        # cross over example
+        mid = int(len(self.genome) / 2)
+        strand1 = self.genome[:mid]
+        strand2 = self.genome[mid:]
+        new_genome = strand2 + strand1
+
+        # another crossover example
+        # for y in range(height):
+        #     for x in range(left, right):
+        #         # STUDENT Which one should you take?  Self, or other?  Why?
+        #         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
+        #         if (self.genome[x][y] != '-'):
+        #             new_genome[x][y] = other.genome[x][y]
+                # else:
+                #
+                # pass
+
+        # point mutation example
+        # for y in range(height):
+        #     for x in range(left, right):
+        #         if (random.choice(True, True, True, False) )
+
         # do mutation; note we're returning a one-element tuple here
         return (Individual_Grid(new_genome),)
 
@@ -175,6 +196,7 @@ class Individual_DE(object):
         return self
 
     def fitness(self):
+        # this is the heuristic
         if self._fitness is None:
             self.calculate_fitness()
         return self._fitness
@@ -339,14 +361,27 @@ class Individual_DE(object):
         ]) for i in range(elt_count)]
         return Individual_DE(g)
 
+# change this to Individual_DE for the other func
 
 Individual = Individual_Grid
 
 
 def generate_successors(population):
     results = []
+
     # STUDENT Design and implement this
     # Hint: Call generate_children() on some individuals and fill up results.
+    # mutate takes one individual map, and changes it randomly
+    # cross
+    # do a mutation and a crossover
+    # for individual in population
+    #     individual.generate_children()
+    # population = sorted(population, key=lambda x: x.fitness())
+    #
+    #
+    # results = [population[0].generate_children(population[1])]
+    results = population
+
     return results
 
 
