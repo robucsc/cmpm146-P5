@@ -73,9 +73,17 @@ class Individual_Grid(object):
 
         left = 1
         right = width - 1
+        # for y in range(height):
+        #     for x in range(left, right):
+        #         pass
+        # return genome
+
+        # point mutation example
         for y in range(height):
             for x in range(left, right):
-                pass
+                if (random.choice(False, False, False, False, False, False, False, False, False, True)):
+                    genome[x][y] = random.choice(options)
+                    print(genome[x][y])
         return genome
 
     # Create zero or more children from self and other
@@ -89,7 +97,7 @@ class Individual_Grid(object):
         # cross over example
         mid = int(len(self.genome) / 2)
         strand1 = self.genome[:mid]
-        strand2 = self.genome[mid:]
+        strand2 = other.genome[mid:]
         new_genome = strand2 + strand1
 
         # another crossover example
@@ -99,14 +107,12 @@ class Individual_Grid(object):
         #         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
         #         if (self.genome[x][y] != '-'):
         #             new_genome[x][y] = other.genome[x][y]
-                # else:
-                #
-                # pass
+        #         else:
+        #
+        #         pass
 
-        # point mutation example
-        # for y in range(height):
-        #     for x in range(left, right):
-        #         if (random.choice(True, True, True, False) )
+        # for child in children:
+        #     child = child.mutate()
 
         # do mutation; note we're returning a one-element tuple here
         return (Individual_Grid(new_genome),)
@@ -368,19 +374,19 @@ Individual = Individual_Grid
 
 def generate_successors(population):
     results = []
-
+    # this is where we do selection
     # STUDENT Design and implement this
     # Hint: Call generate_children() on some individuals and fill up results.
     # mutate takes one individual map, and changes it randomly
     # cross
     # do a mutation and a crossover
-    # for individual in population
-    #     individual.generate_children()
-    # population = sorted(population, key=lambda x: x.fitness())
-    #
-    #
-    # results = [population[0].generate_children(population[1])]
-    results = population
+    for individual in population
+        individual.generate_children()
+    population = sorted(population, key=lambda x: x.fitness())
+
+
+    results = [population[0].generate_children(population[1])]
+    # results = population
 
     return results
 

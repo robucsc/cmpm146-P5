@@ -57,7 +57,7 @@ public class SMBGameWorld : SMBSingleton<SMBGameWorld> {
 
 	// Use this for initialization
 	void Start () {
-
+        Application.targetFrameRate = 60;
 		SMBTileMap tileMap = SMBLevelParser.ParseTileMap (SMBConstants.tilesDescrition);
 		if (tileMap == null)
 			return;
