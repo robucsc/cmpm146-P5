@@ -82,8 +82,8 @@ class Individual_Grid(object):
         for y in range(height):
             for x in range(left, right):
                 if (random.choice(False, False, False, False, False, False, False, False, False, True)):
-                    genome[x][y] = random.choice(options)
-                    print(genome[x][y])
+                    genome[y][x] = random.choice(options)
+                    print(genome[y][x])
         return genome
 
     # Create zero or more children from self and other
@@ -98,7 +98,7 @@ class Individual_Grid(object):
         mid = int(len(self.genome) / 2)
         strand1 = self.genome[:mid]
         strand2 = other.genome[mid:]
-        new_genome = strand2 + strand1
+        child = strand2 + strand1
 
         # another crossover example
         # for y in range(height):
@@ -115,7 +115,7 @@ class Individual_Grid(object):
         #     child = child.mutate()
 
         # do mutation; note we're returning a one-element tuple here
-        return (Individual_Grid(new_genome),)
+        return (Individual_Grid(child),)
 
     # Turn the genome into a level string (easy for this genome)
     def to_level(self):
@@ -374,22 +374,39 @@ Individual = Individual_Grid
 
 def generate_successors(population):
     results = []
+    chosen = []
     # this is where we do selection
     # STUDENT Design and implement this
     # Hint: Call generate_children() on some individuals and fill up results.
     # mutate takes one individual map, and changes it randomly
     # cross
     # do a mutation and a crossover
-    for individual in population
-        individual.generate_children()
-    population = sorted(population, key=lambda x: x.fitness())
+    # for individual in population
+    #     individual.generate_children()
+    # population = sorted(population, key=lambda x: x.fitness())
+    #
+    #
+    # results = [population[0].generate_children(population[1])]
+    # # results = population
+    #
+    # return results
 
-
-    results = [population[0].generate_children(population[1])]
-    # results = population
+    sum_of_fitness = sum(abs(p.fitness()) for p in population)
+    prev_probability = random.uniform(0, sum_of_fitness)
+    current_probability = 0
+    #print("sum: ", sum_of_fitness)
+    # Choose candidates from population fit for crossover
+    for p in population:
+        current_probability += abs(p.fitness())
+        #print("fitness: ", abs(p.fitness()))
+        if current_probability > prev_probability:
+            chosen.append(p)
+    # Crossover
+    for c in range(0, len(chosen) - 1, 1):
+        result = chosen[c].generate_children(chosen[c + 1])
+        results.append(result[0])
 
     return results
-
 
 def ga():
     # STUDENT Feel free to play with this parameter
