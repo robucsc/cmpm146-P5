@@ -84,12 +84,22 @@ class Individual_Grid(object):
         pipe_floor = 14
         top_max = 15
         top_count = 0
-        plat_length = 2
+        plat_length = 3
+        block_ceil = 9
 
-        left = 1
-        right = width - 5
+
+
+        left_clean = 0
+        right_clean = 10
+        left = 10
+        right = width - 10
         mutate_list = [False, False, False, False, False, False, False, False, False, False, False, False, True]
         plat_list = ['B', 'M', '?']
+
+        for y in range(height - 1):
+            for x in range(left_clean, right_clean):
+                genome[y][x] = "-"
+
         for y in range(height):
             for x in range(left, right):
                 if (random.choice(mutate_list)):
@@ -106,18 +116,28 @@ class Individual_Grid(object):
                     while x2 < plat_length:
                         genome[y][x2] = random.choice(plat_list)
                         x2 += 1
-                if (genome[y][x] == "|" and y > pipe_ceil):
+                if (genome[y][x] ==  ("M" or 'B' or '?') and y > block_ceil ):
+                    genome[y][x] = "-"
+                # if (genome[y][x] == "|" and y < pipe_ceil):
+                #     genome[y][x] = "-"
+                if (genome[y][x] == "|"):
                     genome[y][x] = "-"
                 if (genome[y][x] == "T" and y < pipe_ceil ):
                     genome[y][x] = "-"
 
+        # for y in range(height):
+        #     for x in range(left, right):
                 if genome[y][x] == "T":
                     y2 = y + 1
-                    while y2 < height and genome[y2][x] not in ["X", "?", "M", "B", "T", "|"]:
+                    while y2 < height and genome[y2][x]:
+                            # not in ["X", "?", "M", "B", "T", "|"]:
                         genome[y2][x] = "|"
                         y2 += 1
                 if (y == height - 1):
                     genome[y][x] = "X"
+                genome[7][-7] = "v"
+                genome[8:14][-5] = ["f"] * 6
+                genome[14][0] = "m"
 
 
         return genome
@@ -130,12 +150,20 @@ class Individual_Grid(object):
         right = width - 5
 
         # cross over example
-        mid = int(len(self.genome) / 2)
-        strand_left = self.genome[:mid]
-        strand_right = other.genome[mid:]
-        child = strand_left + strand_right
-        child = self.mutate(child)
-        # child = self.mutate(self.genome)
+        # mid = int(len(self.genome) / 2)
+        # strand_left = self.genome[:mid]
+        # strand_right = other.genome[mid:]
+        # child = strand_left + strand_right
+
+        for y in range(height):
+            for x in range(left, right):
+                if (random.randint(1, 100) > 20):
+                    new_genome[y][x] = other.genome[y][x]
+                else:
+                    new_genome[y][x] = self.genome[y][x]
+
+        child = self.mutate(new_genome)
+        # child = new_genome
 
         # do mutation; note we're returning a one-element tuple here
         return (Individual_Grid(child),)
@@ -151,9 +179,9 @@ class Individual_Grid(object):
         g = [["-" for col in range(width)] for row in range(height)]
         g[15][:] = ["X"] * width
         g[14][0] = "m"
-        g[7][-5] = "v"
+        g[7][-7] = "v"
         for col in range(8, 14):
-            g[col][-1] = "f"
+            g[col][-7] = "f"
         for col in range(14, 16):
             g[col][-1] = "X"
         return cls(g)
@@ -166,7 +194,7 @@ class Individual_Grid(object):
         g[15][:] = ["X"] * width
         g[14][0] = "m"
         g[7][-7] = "v"
-        g[8:14][-1] = ["f"] * 6
+        g[8:14][-5] = ["f"] * 6
         g[14:16][-1] = ["X", "X"]
         return cls(g)
 
@@ -179,15 +207,12 @@ def offset_by_upto(val, variance, min=None, max=None):
         val = max
     return int(val)
 
-
 def clip(lo, val, hi):
     if val < lo:
         return lo
     if val > hi:
         return hi
     return val
-
-# Inspired by https://www.researchgate.net/profile/Philippe_Pasquier/publication/220867545_Towards_a_Generic_Framework_for_Automated_Video_Game_Level_Creation/links/0912f510ac2bed57d1000000.pdf
 
 def tournament(population):
     nu_population = []
@@ -197,8 +222,6 @@ def tournament(population):
         nu_population.append(winner)
     return nu_population
 
-
-
 def elite(population):
     elite_tune = 2.8
     nu_population = []
@@ -207,13 +230,6 @@ def elite(population):
             nu_population.append(indivdual)
     return nu_population
 
-
-# def elistist(population):
-#     return population
-#
-# def roulette(population):
-#     pass
-#     return population
 
 # def proportionate(population):
 #
@@ -441,12 +457,10 @@ Individual = Individual_Grid
 
 def generate_successors(population):
     nu_population = []
-    population = tournament(population)
     population = tournament(population) + elite(population)
 
     for i in range(0, len(population) - 1, 1):
         nu_population.append(population[i].generate_children(population[i + 1])[0])
-
     return nu_population
 
 def ga():
