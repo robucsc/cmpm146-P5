@@ -28,6 +28,8 @@ options = [
 
 # The level as a grid of tiles
 
+def convert_to_tuple(list):
+    return(*list, )
 
 class Individual_Grid(object):
     __slots__ = ["genome", "_fitness"]
@@ -54,6 +56,8 @@ class Individual_Grid(object):
             linearity=-0.5,
             solvability=2.0
         )
+
+        # for y in
         self._fitness = sum(map(lambda m: coefficients[m] * measurements[m],
                                 coefficients))
         return self
@@ -71,48 +75,67 @@ class Individual_Grid(object):
         # STUDENT also consider weighting the different tile types so it's not uniformly random
         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
 
-        left = 1
-        right = width - 1
-        # for y in range(height):
-        #     for x in range(left, right):
-        #         pass
-        # return genome
+        e_max = 1
+        e_count = 0
+        e_ceil = 12
+        pipe_max = 5
+        pipe_count = 0
+        pipe_ceil = 12
+        pipe_floor = 14
+        top_max = 15
+        top_count = 0
+        plat_length = 2
 
-        # point mutation example
+        left = 1
+        right = width - 5
+        mutate_list = [False, False, False, False, False, False, False, False, False, False, False, False, True]
+        plat_list = ['B', 'M', '?']
         for y in range(height):
             for x in range(left, right):
-                if (random.choice(False, False, False, False, False, False, False, False, False, True)):
+                if (random.choice(mutate_list)):
                     genome[y][x] = random.choice(options)
-                    print(genome[y][x])
+                if (genome[y][x] == "X" and y < height - 2):
+                    genome[y][x] = "-"
+                if (genome[y][x] == "E" and y < e_ceil):
+                    genome[y][x] = "-"
+                if (genome[y][x] == "E" and e_count >= e_max):
+                    genome[y][x] = "-"
+                    e_count += 1
+                if (genome[y][x] == "M" or 'B' or '?'):
+                    x2 = x + 1
+                    while x2 < plat_length:
+                        genome[y][x2] = random.choice(plat_list)
+                        x2 += 1
+                if (genome[y][x] == "|" and y > pipe_ceil):
+                    genome[y][x] = "-"
+                if (genome[y][x] == "T" and y < pipe_ceil ):
+                    genome[y][x] = "-"
+
+                if genome[y][x] == "T":
+                    y2 = y + 1
+                    while y2 < height and genome[y2][x] not in ["X", "?", "M", "B", "T", "|"]:
+                        genome[y2][x] = "|"
+                        y2 += 1
+                if (y == height - 1):
+                    genome[y][x] = "X"
+
+
         return genome
 
-    # Create zero or more children from self and other
     def generate_children(self, other):
         new_genome = copy.deepcopy(self.genome)
         # Leaving first and last columns alone...
         # do crossover with other
         left = 1
-        right = width - 1
+        right = width - 5
 
         # cross over example
         mid = int(len(self.genome) / 2)
-        strand1 = self.genome[:mid]
-        strand2 = other.genome[mid:]
-        child = strand2 + strand1
-
-        # another crossover example
-        # for y in range(height):
-        #     for x in range(left, right):
-        #         # STUDENT Which one should you take?  Self, or other?  Why?
-        #         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
-        #         if (self.genome[x][y] != '-'):
-        #             new_genome[x][y] = other.genome[x][y]
-        #         else:
-        #
-        #         pass
-
-        # for child in children:
-        #     child = child.mutate()
+        strand_left = self.genome[:mid]
+        strand_right = other.genome[mid:]
+        child = strand_left + strand_right
+        child = self.mutate(child)
+        # child = self.mutate(self.genome)
 
         # do mutation; note we're returning a one-element tuple here
         return (Individual_Grid(child),)
@@ -128,7 +151,7 @@ class Individual_Grid(object):
         g = [["-" for col in range(width)] for row in range(height)]
         g[15][:] = ["X"] * width
         g[14][0] = "m"
-        g[7][-1] = "v"
+        g[7][-5] = "v"
         for col in range(8, 14):
             g[col][-1] = "f"
         for col in range(14, 16):
@@ -142,7 +165,7 @@ class Individual_Grid(object):
         g = [random.choices(options, k=width) for row in range(height)]
         g[15][:] = ["X"] * width
         g[14][0] = "m"
-        g[7][-1] = "v"
+        g[7][-7] = "v"
         g[8:14][-1] = ["f"] * 6
         g[14:16][-1] = ["X", "X"]
         return cls(g)
@@ -165,6 +188,51 @@ def clip(lo, val, hi):
     return val
 
 # Inspired by https://www.researchgate.net/profile/Philippe_Pasquier/publication/220867545_Towards_a_Generic_Framework_for_Automated_Video_Game_Level_Creation/links/0912f510ac2bed57d1000000.pdf
+
+def tournament(population):
+    nu_population = []
+    random.shuffle(population)
+    for i in range(0, len(population) - 1, 1):
+        winner = population[i] if population[i].fitness() > population[i + 1].fitness() else population[i + 1]
+        nu_population.append(winner)
+    return nu_population
+
+
+
+def elite(population):
+    elite_tune = 2.8
+    nu_population = []
+    for indivdual in population:
+        if indivdual.fitness() > elite_tune:
+            nu_population.append(indivdual)
+    return nu_population
+
+
+# def elistist(population):
+#     return population
+#
+# def roulette(population):
+#     pass
+#     return population
+
+# def proportionate(population):
+#
+#     sum_of_fitness = sum(abs(p.fitness()) for p in population)
+#     prev_probability = random.uniform(0, sum_of_fitness)
+#     current_probability = 0
+#     # print("sum: ", sum_of_fitness)
+#     # Choose candidates from population fit for crossover
+#     for p in population:
+#         current_probability += abs(p.fitness())
+#         # print("fitness: ", abs(p.fitness()))
+#         if current_probability > prev_probability:
+#             chosen.append(p)
+#         # Crossover
+#     for c in range(0, len(chosen) - 1, 1):
+#         result = chosen[c].generate_children(chosen[c + 1])
+#         results.append(result[0])
+#
+#     return results
 
 
 class Individual_DE(object):
@@ -348,7 +416,7 @@ class Individual_DE(object):
     @classmethod
     def empty_individual(_cls):
         # STUDENT Maybe enhance this
-        g = []
+        g = [(random.randint(1, width - 2), "3_coin", random.randint(0, height - 1))]
         return Individual_DE(g)
 
     @classmethod
@@ -371,42 +439,15 @@ class Individual_DE(object):
 
 Individual = Individual_Grid
 
-
 def generate_successors(population):
-    results = []
-    chosen = []
-    # this is where we do selection
-    # STUDENT Design and implement this
-    # Hint: Call generate_children() on some individuals and fill up results.
-    # mutate takes one individual map, and changes it randomly
-    # cross
-    # do a mutation and a crossover
-    # for individual in population
-    #     individual.generate_children()
-    # population = sorted(population, key=lambda x: x.fitness())
-    #
-    #
-    # results = [population[0].generate_children(population[1])]
-    # # results = population
-    #
-    # return results
+    nu_population = []
+    population = tournament(population)
+    population = tournament(population) + elite(population)
 
-    sum_of_fitness = sum(abs(p.fitness()) for p in population)
-    prev_probability = random.uniform(0, sum_of_fitness)
-    current_probability = 0
-    #print("sum: ", sum_of_fitness)
-    # Choose candidates from population fit for crossover
-    for p in population:
-        current_probability += abs(p.fitness())
-        #print("fitness: ", abs(p.fitness()))
-        if current_probability > prev_probability:
-            chosen.append(p)
-    # Crossover
-    for c in range(0, len(chosen) - 1, 1):
-        result = chosen[c].generate_children(chosen[c + 1])
-        results.append(result[0])
+    for i in range(0, len(population) - 1, 1):
+        nu_population.append(population[i].generate_children(population[i + 1])[0])
 
-    return results
+    return nu_population
 
 def ga():
     # STUDENT Feel free to play with this parameter
