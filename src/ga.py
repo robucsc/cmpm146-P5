@@ -62,6 +62,29 @@ class Individual_Grid(object):
                                 coefficients))
         return self
 
+    def calculate_fitness_two(self):
+        measurements = metrics.metrics(self.to_level())
+        # Print out the possible measurements or look at the implementation of metrics.py for other keys:
+        # print(measurements.keys())
+        # Default fitness function: Just some arbitrary combination of a few criteria.  Is it good?  Who knows?
+        # STUDENT Modify this, and possibly add more metrics.  You can replace this with whatever code you like.
+
+        # difficulty curve
+        coefficients = dict(
+            meaningfulJumpVariance=0.3,
+            negativeSpace=0.3,
+            pathPercentage=0.3,
+            emptyPercentage=0.3,
+            linearity=-0.4,
+            solvability=1.9
+        )
+
+        # for y in
+        self._fitness = sum(map(lambda m: coefficients[m] * measurements[m],
+                                coefficients))
+        return self
+
+
     # Return the cached fitness value or calculate it as needed.
     def fitness(self):
         # this is the heuristic
@@ -74,38 +97,77 @@ class Individual_Grid(object):
         # STUDENT implement a mutation operator, also consider not mutating this individual
         # STUDENT also consider weighting the different tile types so it's not uniformly random
         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
-
+        #
         e_max = 1
         e_count = 0
         e_ceil = 12
-        pipe_max = 5
-        pipe_count = 0
         pipe_ceil = 12
-        pipe_floor = 14
-        top_max = 15
-        top_count = 0
+        pipe_count = 5
         plat_length = 3
         block_ceil = 9
-
-
-
         left_clean = 0
         right_clean = 10
+        back_clean_left = width - 10
+        back_clean_right = width
         left = 10
         right = width - 10
-        mutate_list = [False, False, False, False, False, False, False, False, False, False, False, False, True]
         plat_list = ['B', 'M', '?']
+        mutate_rate = 3000
 
+        # First do some cleaning to remove objects within space we want clear
         for y in range(height - 1):
             for x in range(left_clean, right_clean):
                 genome[y][x] = "-"
 
+        for y in range(height - 1):
+            for x in range(back_clean_left, back_clean_right):
+                genome[y][x] = "-"
+
+        for y in range(height - 10):
+            for x in range(left, right):
+                genome[y][x] = "-"
+
+        # Remove any unwanted options
+        for y in range(height - 1):
+            for x in range(left, right):
+                if random.randint(1, mutate_rate) < 2:
+                    genome[y][x] = random.choice(options)
+                if genome[y][x] == "X" and y < height - 2:
+                    genome[y][x] = "-"
+                elif genome[y][x] == "E" and (y < e_ceil or e_count >= e_max):
+                    genome[y][x] = "-"
+                    if e_count >= e_max:
+                        e_count += 1
+                elif genome[y][x] in plat_list and (genome[y - 1][x] in plat_list or y > block_ceil):
+                    genome[y][x] = "-"
+                elif genome[y][x] == "|":
+                    genome[y][x] = "-"
+                elif genome[y][x] == "T" and y < pipe_ceil:
+                    genome[y][x] = "-"
+
+        # Add in wanted items
+        for y in range(height - 1):
+            for x in range(left, right):
+                if genome[y][x] == "T":
+                    y2 = y + 1
+                    while y2 < height:
+                        genome[y2][x] = "|"
+                        y2 += 1
+                elif genome[y][x] in plat_list:
+                    x2 = x + 1
+                    while x2 < plat_length:
+                        genome[y][x2] = random.choice(plat_list)
+                        x2 += 1
+
+        """
         for y in range(height):
             for x in range(left, right):
-                if (random.choice(mutate_list)):
+                if (random.randint(1, 1000) < 2 ):
                     genome[y][x] = random.choice(options)
+
                 if (genome[y][x] == "X" and y < height - 2):
                     genome[y][x] = "-"
+
                 if (genome[y][x] == "E" and y < e_ceil):
                     genome[y][x] = "-"
                 if (genome[y][x] == "E" and e_count >= e_max):
@@ -116,30 +178,49 @@ class Individual_Grid(object):
                     while x2 < plat_length:
                         genome[y][x2] = random.choice(plat_list)
                         x2 += 1
+
                 if (genome[y][x] ==  ("M" or 'B' or '?') and y > block_ceil ):
                     genome[y][x] = "-"
-                # if (genome[y][x] == "|" and y < pipe_ceil):
-                #     genome[y][x] = "-"
-                if (genome[y][x] == "|"):
-                    genome[y][x] = "-"
-                if (genome[y][x] == "T" and y < pipe_ceil ):
+
+                if (genome[y][x] ==  ("M" or 'B' or '?') and  genome[y-1][x] == ("M" or 'B' or '?')):
                     genome[y][x] = "-"
 
-        # for y in range(height):
-        #     for x in range(left, right):
-                if genome[y][x] == "T":
+                if (genome[y][x] == "|" and y < pipe_ceil):
+                    genome[y][x] = "-"
+                
+                if (genome[y][x] == "|"):
+                    genome[y][x] = "-"
+
+                if (genome[y][x] == "T" and y < pipe_ceil ):
+                    genome[y][x] = "-"
+                
+                if genome[y][x] == "T" and y < pipe_ceil:
                     y2 = y + 1
-                    while y2 < height and genome[y2][x]:
-                            # not in ["X", "?", "M", "B", "T", "|"]:
+                    while y2 < height:
                         genome[y2][x] = "|"
                         y2 += 1
                 if (y == height - 1):
                     genome[y][x] = "X"
-                genome[7][-7] = "v"
-                genome[8:14][-5] = ["f"] * 6
-                genome[14][0] = "m"
+                
+        for y in range(height - 1):
+            for x in range(left_clean, right_clean):
+                genome[y][x] = "-"
 
+        for y in range(height - 10):
+            for x in range(left, right):
+                genome[y][x] = "-"
 
+        for y in range(height - 1):
+            for x in range(back_clean_left, back_clean_right):
+                genome[y][x] = "-"
+        """
+
+        genome[7][-7] = "v"
+        genome[8:14][-5] = ["f"] * 6
+        genome[14][0] = "m"
+        genome[14:16][-1] = ["X", "X"]
+
+        # print(genome)
         return genome
 
     def generate_children(self, other):
@@ -153,14 +234,20 @@ class Individual_Grid(object):
         # mid = int(len(self.genome) / 2)
         # strand_left = self.genome[:mid]
         # strand_right = other.genome[mid:]
-        # child = strand_left + strand_right
+        # new_genome = strand_left + strand_right
 
-        for y in range(height):
-            for x in range(left, right):
-                if (random.randint(1, 100) > 20):
-                    new_genome[y][x] = other.genome[y][x]
-                else:
-                    new_genome[y][x] = self.genome[y][x]
+        # if (random.randint(1, 100) > 20):
+        cross = random.randint(1, int(len(self.genome)))
+        strand_left = self.genome[:cross]
+        strand_right = other.genome[cross:]
+        new_genome = strand_left + strand_right
+
+        # for y in range(height):
+        #     for x in range(left, right):
+        #         if (random.randint(1, 100) > 20):
+        #             new_genome[y][x] = other.genome[y][x]
+        #         else:
+        #             new_genome[y][x] = self.genome[y][x]
 
         child = self.mutate(new_genome)
         # child = new_genome
@@ -222,14 +309,42 @@ def tournament(population):
         nu_population.append(winner)
     return nu_population
 
+def tournament_loser(population):
+    nu_population = []
+    random.shuffle(population)
+    for i in range(0, len(population) - 1, 1):
+        loser = population[i] if population[i].fitness() < population[i + 1].fitness() else population[i + 1]
+        nu_population.append(loser)
+    return nu_population
+
 def elite(population):
-    elite_tune = 2.8
+    elite_tune = 3.0
     nu_population = []
     for indivdual in population:
         if indivdual.fitness() > elite_tune:
             nu_population.append(indivdual)
     return nu_population
 
+def two_pop(pop_one, pop_two):
+    elite_population = []
+    rabble_population = []
+    elite_tune = 3.0
+
+    full_pop = pop_one + pop_two
+
+    cross = random.randint(1, int(len(pop_one)))
+    pop_left = pop_one[:cross]
+    if cross > int(len(pop_two)):
+        cross = len(pop_two) - 1
+    pop_right = pop_two[cross:]
+    full_pop = pop_left + pop_right
+
+    for indivdual in full_pop:
+        if indivdual.fitness() >= elite_tune:
+            elite_population.append(indivdual)
+        else:
+            rabble_population.append(indivdual)
+    return (elite_population, rabble_population)
 
 # def proportionate(population):
 #
@@ -272,17 +387,40 @@ class Individual_DE(object):
             meaningfulJumpVariance=0.5,
             negativeSpace=0.6,
             pathPercentage=0.5,
-            emptyPercentage=0.6,
+            emptyPercentage= -0.7,
             linearity=-0.5,
-            solvability=2.0
+            solvability=6.0
         )
         penalties = 0
         # STUDENT For example, too many stairs are unaesthetic.  Let's penalize that
         if len(list(filter(lambda de: de[1] == "6_stairs", self.genome))) > 5:
             penalties -= 2
         # STUDENT If you go for the FI-2POP extra credit, you can put constraint calculation in here too and cache it in a new entry in __slots__.
+        # we just made a second fitness function
         self._fitness = sum(map(lambda m: coefficients[m] * measurements[m],
                                 coefficients)) + penalties
+        return self
+
+    def calculate_fitness_two(self):
+        measurements = metrics.metrics(self.to_level())
+        # Print out the possible measurements or look at the implementation of metrics.py for other keys:
+        # print(measurements.keys())
+        # Default fitness function: Just some arbitrary combination of a few criteria.  Is it good?  Who knows?
+        # STUDENT Modify this, and possibly add more metrics.  You can replace this with whatever code you like.
+
+        # difficulty curve
+        coefficients = dict(
+            meaningfulJumpVariance=0.3,
+            negativeSpace=0.3,
+            pathPercentage=0.3,
+            emptyPercentage=0.3,
+            linearity=-0.4,
+            solvability=1.9
+        )
+
+        # for y in
+        self._fitness = sum(map(lambda m: coefficients[m] * measurements[m],
+                                coefficients))
         return self
 
     def fitness(self):
@@ -453,15 +591,40 @@ class Individual_DE(object):
 
 # change this to Individual_DE for the other func
 
-Individual = Individual_Grid
+# Individual = Individual_Grid
+Individual = Individual_DE
+
+def migration(pop_one, pop_two):
+    cross = random.randint(1, int(len(pop_one.genome)))
+    strand_left = pop_one.genome[:cross]
+    strand_right = pop_two.genome[cross:]
+    return strand_left + strand_right
 
 def generate_successors(population):
     nu_population = []
+    pop_size = 480
     population = tournament(population) + elite(population)
-
+    print('population size ', len(population))
+    if len(population) > pop_size:
+        random.shuffle(population)
+        population = population[:399]
     for i in range(0, len(population) - 1, 1):
         nu_population.append(population[i].generate_children(population[i + 1])[0])
     return nu_population
+
+def call_gen_children(population):
+    nu_population = []
+    if len(population) > 400:
+        random.shuffle(population)
+        population = population[:399]
+    for i in range(0, len(population) - 1, 1):
+        nu_population.append(population[i].generate_children(population[i + 1])[0])
+    return nu_population
+
+def generate_successors_2pop(elite_population, rabble_population):
+    elite_population = call_gen_children(tournament(elite_population))
+    rabble_population = call_gen_children(tournament(rabble_population))
+    return two_pop(elite_population, rabble_population)
 
 def ga():
     # STUDENT Feel free to play with this parameter
@@ -521,6 +684,72 @@ def ga():
             pass
     return population
 
+def ga_2pop():
+    # STUDENT Feel free to play with this parameter
+    pop_limit = 480
+    # Code to parallelize some computations
+    batches = os.cpu_count()
+    if pop_limit % batches != 0:
+        print("It's ideal if pop_limit divides evenly into " + str(batches) + " batches.")
+    batch_size = int(math.ceil(pop_limit / batches))
+    with mpool.Pool(processes=os.cpu_count()) as pool:
+        init_time = time.time()
+        # STUDENT (Optional) change population initialization - can get to better results quicker
+        population = [Individual.random_individual() if random.random() < 0.9
+                      else Individual.empty_individual()
+                      for _g in range(pop_limit)]
+        # But leave this line alone; we have to reassign to population because we get a new population that has more cached stuff in it.
+        population = pool.map(Individual.calculate_fitness,
+                              population,
+                              batch_size)
+        init_done = time.time()
+        print("Created and calculated initial population statistics in:", init_done - init_time, "seconds")
+        generation = 0
+        start = time.time()
+        now = start
+        print("Use ctrl-c to terminate this loop manually.")
+
+        cross = random.randint(1, int(len(population)))
+        elite_population = population[:cross]
+        rabble_population = population[cross:]
+
+        try:
+            while True:
+                now = time.time()
+                # Print out statistics
+                if generation > 0:
+                    best = max(elite_population, key=Individual.fitness)
+                    print("Generation:", str(generation))
+                    print("Max fitness:", str(best.fitness()))
+                    print("Average generation time:", (now - start) / generation)
+                    print("Net time:", now - start)
+                    with open("levels/last.txt", 'w') as f:
+                        for row in best.to_level():
+                            f.write("".join(row) + "\n")
+                generation += 1
+                # STUDENT Determine stopping condition - creates a folder called levels and puts the gen levels in folder
+                stop_condition = False
+                if stop_condition:
+                    break
+                # STUDENT Also consider using FI-2POP as in the Sorenson & Pasquier paper
+                gentime = time.time()
+                next_population_elite, next_population_rabble = generate_successors_2pop(elite_population, rabble_population)
+                gendone = time.time()
+                print("Generated successors in:", gendone - gentime, "seconds")
+                # Calculate fitness in batches in parallel -  a good place to mod
+                next_population_elite = pool.map(Individual.calculate_fitness, next_population_elite,
+                                           batch_size)
+                next_population_rabble = pool.map(Individual.calculate_fitness_two,
+                                                 next_population_rabble,
+                                                 batch_size)
+                popdone = time.time()
+                print("Calculated fitnesses in:", popdone - gendone, "seconds")
+                elite_population = next_population_elite
+                rabble_population = next_population_rabble
+
+        except KeyboardInterrupt:
+            pass
+    return (elite_population, rabble_population)
 
 if __name__ == "__main__":
     final_gen = sorted(ga(), key=Individual.fitness, reverse=True)
