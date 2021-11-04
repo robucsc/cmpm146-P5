@@ -159,62 +159,6 @@ class Individual_Grid(object):
                         genome[y][x2] = random.choice(plat_list)
                         x2 += 1
 
-        """
-        for y in range(height):
-            for x in range(left, right):
-                if (random.randint(1, 1000) < 2 ):
-                    genome[y][x] = random.choice(options)
-
-                if (genome[y][x] == "X" and y < height - 2):
-                    genome[y][x] = "-"
-
-                if (genome[y][x] == "E" and y < e_ceil):
-                    genome[y][x] = "-"
-                if (genome[y][x] == "E" and e_count >= e_max):
-                    genome[y][x] = "-"
-                    e_count += 1
-                if (genome[y][x] == "M" or 'B' or '?'):
-                    x2 = x + 1
-                    while x2 < plat_length:
-                        genome[y][x2] = random.choice(plat_list)
-                        x2 += 1
-
-                if (genome[y][x] ==  ("M" or 'B' or '?') and y > block_ceil ):
-                    genome[y][x] = "-"
-
-                if (genome[y][x] ==  ("M" or 'B' or '?') and  genome[y-1][x] == ("M" or 'B' or '?')):
-                    genome[y][x] = "-"
-
-                if (genome[y][x] == "|" and y < pipe_ceil):
-                    genome[y][x] = "-"
-                
-                if (genome[y][x] == "|"):
-                    genome[y][x] = "-"
-
-                if (genome[y][x] == "T" and y < pipe_ceil ):
-                    genome[y][x] = "-"
-                
-                if genome[y][x] == "T" and y < pipe_ceil:
-                    y2 = y + 1
-                    while y2 < height:
-                        genome[y2][x] = "|"
-                        y2 += 1
-                if (y == height - 1):
-                    genome[y][x] = "X"
-                
-        for y in range(height - 1):
-            for x in range(left_clean, right_clean):
-                genome[y][x] = "-"
-
-        for y in range(height - 10):
-            for x in range(left, right):
-                genome[y][x] = "-"
-
-        for y in range(height - 1):
-            for x in range(back_clean_left, back_clean_right):
-                genome[y][x] = "-"
-        """
-
         genome[7][-7] = "v"
         genome[8:14][-5] = ["f"] * 6
         genome[14][0] = "m"
@@ -474,11 +418,18 @@ class Individual_DE(object):
                     h = offset_by_upto(h, 2, min=2, max=height - 4)
                 new_de = (x, de_type, h)
             elif de_type == "0_hole":
+                # Made some improvements here
                 w = de[2]
-                if choice < 0.5:
+                # If true set the width of the hole to be of size 2.
+                if choice < 0.33:
                     x = offset_by_upto(x, width / 8, min=1, max=width - 2)
+                    w = 2
+                # If true set the width of the hole to be of size 1
+                elif choice < 0.66:
+                    x = offset_by_upto(x, width / 4, min=1, max=width - 2)
+                    w = 1
                 else:
-                    w = offset_by_upto(w, 4, min=1, max=width - 2)
+                    w = offset_by_upto(w, 2, min=1, max=2)
                 new_de = (x, de_type, w)
             elif de_type == "6_stairs":
                 h = de[2]
